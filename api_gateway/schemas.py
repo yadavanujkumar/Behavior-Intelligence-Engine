@@ -95,3 +95,5 @@ class StatsResponse(BaseModel):
     alerts_by_severity: Dict[str, int]
     uptime_seconds: float
     cameras: List[str]
+    fps: float = 0.0
+    frame_count: int = 0

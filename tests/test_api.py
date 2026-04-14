@@ -4,7 +4,9 @@ Integration tests for the FastAPI endpoints.
 Uses TestClient with mocked pipeline + DB so no ML models or DB are needed.
 """
 
-import sys, os
+import sys
+import os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest

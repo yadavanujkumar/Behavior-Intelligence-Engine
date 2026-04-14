@@ -204,6 +204,8 @@ async def get_stats():
         alerts_by_severity=stats.get("alerts_by_severity", {}),
         uptime_seconds=stats.get("uptime_seconds", 0.0),
         cameras=["cam0"],
+        fps=stats.get("fps", 0.0),
+        frame_count=stats.get("frame_count", 0),
     )
 
 

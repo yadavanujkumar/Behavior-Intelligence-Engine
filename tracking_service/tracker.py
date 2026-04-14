@@ -14,6 +14,7 @@ Track lifecycle:
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
+import cv2
 import numpy as np
 
 from config.logger import get_logger
@@ -174,7 +175,3 @@ class DeepSORTTracker:
                 thickness,
             )
         return annotated
-
-
-# cv2 import needed for draw_tracks
-import cv2  # noqa: E402 – placed after class definition intentionally
