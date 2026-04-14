@@ -1,0 +1,91 @@
+version: "3.9"
+
+# ============================================================
+# Behavior Intelligence Engine – Docker Compose
+# ============================================================
+#
+# Services:
+#   db          – PostgreSQL 15
+#   api_gateway – FastAPI (detection + tracking + behavior + alerts)
+#   frontend    – React + Nginx dashboard
+#
+# Usage:
+#   cp config/.env.example .env   # edit as needed
+#   docker-compose up --build
+# ============================================================
+
+services:
+
+  # ----------------------------------------------------------
+  # PostgreSQL Database
+  # ----------------------------------------------------------
+  db:
+    image: postgres:15-alpine
+    container_name: bie_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: behavior_intelligence
+      POSTGRES_USER: bie_user
+      POSTGRES_PASSWORD: bie_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bie_user -d behavior_intelligence"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------
+  # API Gateway (FastAPI – all Python services bundled)
+  # ----------------------------------------------------------
+  api_gateway:
+    build:
+      context: .
+      dockerfile: api_gateway/Dockerfile
+    container_name: bie_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://bie_user:bie_pass@db:5432/behavior_intelligence
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/app/logs
+      - /dev/video0:/dev/video0   # webcam pass-through (optional)
+    devices:
+      - /dev/video0:/dev/video0   # remove if no webcam
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------
+  # React Frontend
+  # ----------------------------------------------------------
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: bie_frontend
+    restart: unless-stopped
+    depends_on:
+      - api_gateway
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:8000
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    name: bie_network
